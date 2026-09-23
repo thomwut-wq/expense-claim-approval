@@ -74,7 +74,10 @@ export function ClaimDetail({ claim, ownerName, userId }: { claim: Claim; ownerN
         break;
     }
     setBusy(true);
-    const { error } = await supabase.from(TABLES.claims).update(patch).eq("id", claim.id);
+    const { error } =
+      action === "delete"
+        ? await supabase.rpc("expense_claim_approval_hzta_soft_delete", { p_id: claim.id })
+        : await supabase.from(TABLES.claims).update(patch).eq("id", claim.id);
     setBusy(false);
     if (error) return toast.error("ดำเนินการไม่สำเร็จ", { description: error.message });
     toast.success(success);

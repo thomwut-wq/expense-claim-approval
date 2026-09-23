@@ -127,6 +127,33 @@ create trigger expense_claim_approval_hzta_claims_bu
 -- Claim number must be immutable and status transitions are enforced in the app +
 -- via the check constraints above.
 
+-- Soft delete goes through an RPC because a row with is_deleted = true no longer
+-- passes the SELECT policy, which makes a direct UPDATE fail under RLS.
+create or replace function public.expense_claim_approval_hzta_soft_delete(p_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_claim public.expense_claim_approval_hzta_claims%rowtype;
+  v_admin boolean := public.expense_claim_approval_hzta_is_admin();
+begin
+  select * into v_claim from public.expense_claim_approval_hzta_claims where id = p_id and not is_deleted;
+  if not found then
+    raise exception 'claim not found' using errcode = 'P0002';
+  end if;
+  if not (v_admin and v_claim.status <> 'PAID')
+     and not (v_claim.created_by = auth.uid() and v_claim.status = 'DRAFT') then
+    raise exception 'not allowed to delete this claim' using errcode = '42501';
+  end if;
+  update public.expense_claim_approval_hzta_claims set is_deleted = true where id = p_id;
+end;
+$$;
+
+revoke all on function public.expense_claim_approval_hzta_soft_delete(uuid) from public;
+grant execute on function public.expense_claim_approval_hzta_soft_delete(uuid) to authenticated;
+
 -- Row Level Security ------------------------------------------------------------
 alter table public.expense_claim_approval_hzta_profiles enable row level security;
 alter table public.expense_claim_approval_hzta_claims enable row level security;
