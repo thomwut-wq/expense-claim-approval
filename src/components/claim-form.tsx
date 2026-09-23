@@ -12,9 +12,10 @@ import { Spinner } from "@/components/ui";
 interface Props {
   claim?: Claim;
   userId: string;
+  onDone?: () => void;
 }
 
-export function ClaimForm({ claim, userId }: Props) {
+export function ClaimForm({ claim, userId, onDone }: Props) {
   const router = useRouter();
   const [title, setTitle] = useState(claim?.title ?? "");
   const [category, setCategory] = useState<Category>(claim?.category ?? "travel");
@@ -54,7 +55,8 @@ export function ClaimForm({ claim, userId }: Props) {
       return;
     }
     toast.success(status === "SUBMITTED" ? "ส่งคำขออนุมัติเรียบร้อยแล้ว" : claim ? "บันทึกการแก้ไขแล้ว" : "บันทึกฉบับร่างแล้ว");
-    router.push(`/claims/${res.data.id}`);
+    if (onDone) onDone();
+    else router.push(`/claims/${res.data.id}`);
     router.refresh();
   }
 
@@ -132,7 +134,7 @@ export function ClaimForm({ claim, userId }: Props) {
       </div>
 
       <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-slate-50/60 px-6 py-4 sm:flex-row sm:items-center sm:justify-end rounded-b-xl">
-        <button type="button" onClick={() => router.back()} className="btn-secondary" disabled={saving !== null}>
+        <button type="button" onClick={() => (onDone ? onDone() : router.back())} className="btn-secondary" disabled={saving !== null}>
           ยกเลิก
         </button>
         <button type="submit" className="btn-secondary border-emerald-600 text-emerald-700 hover:bg-emerald-50" disabled={saving !== null}>

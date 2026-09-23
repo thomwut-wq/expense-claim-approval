@@ -35,7 +35,7 @@ export function ClaimDetail({ claim, ownerName, userId }: { claim: Claim; ownerN
     return (
       <>
         <PageHeader th={`แก้ไข ${claim.claim_no}`} en="Edit claim" />
-        <ClaimForm claim={claim} userId={userId} />
+        <ClaimForm claim={claim} userId={userId} onDone={() => setEditing(false)} />
         <button onClick={() => setEditing(false)} className="btn-ghost mt-3">
           <X className="h-4 w-4" /> ปิดโหมดแก้ไข
         </button>
